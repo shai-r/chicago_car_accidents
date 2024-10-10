@@ -1,7 +1,6 @@
 from flask import Flask
 
 import controllers.accidents_controller as accidents
-import  config.connect
 
 app = Flask(__name__)
 
