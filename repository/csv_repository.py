@@ -41,13 +41,12 @@ def init_accidents():
     data_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'data.csv')
 
     for row in read_csv(data_path):
-
         crash_date = parse_date(row['CRASH_DATE'])
         area = row['BEAT_OF_OCCURRENCE']
 
         # Create a general document for all accidents
         accident_doc = {
-            'date': crash_date,
+            'date': str(crash_date.date()),
             'area': area,
             'injuries': {
                 'total': safe_int(row['INJURIES_TOTAL']),
@@ -65,7 +64,7 @@ def init_accidents():
 
         # Daily document
         daily_doc = {
-            'date': crash_date,
+            'date': str(crash_date.date()),
             'area': area,
             'total_accidents': 1,
             'injuries': {
