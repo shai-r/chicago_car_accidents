@@ -3,6 +3,7 @@ import os
 
 from config.connect import chicago_car_accidents_db, daily, weekly, monthly
 
+#enosh
 
 def read_csv(path: str):
     with open(path, 'r') as file:
