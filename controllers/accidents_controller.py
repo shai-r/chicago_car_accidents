@@ -3,7 +3,8 @@ from http.client import responses
 from flask import Blueprint, jsonify, request
 from config.connect import daily
 from repository.accidents_repository import (find_all_accidents_by_area,
-                                             get_accidents_by_area_and_time)
+                                             get_accidents_by_area_and_time, get_accidents_by_cause,
+                                             get_injury_stats_by_area)
 from repository.csv_repository import init_accidents
 from  dto.ResponseDto import ResponseDto
 from utils.convert_to_json_utils import convert_accidents_by_area_to_json, parse_json
@@ -32,3 +33,13 @@ def get_accidents_by_area(area: int):
 
     accidents = get_accidents_by_area_and_time(area, time_type, date)
     return jsonify(asdict(ResponseDto(body=parse_json(accidents)))), 200
+
+@accidents_blueprint.route('/by_cause/<int:area>', methods=['GET'])
+def accidents_by_cause(area):
+    results = get_accidents_by_cause(area=str(area))
+    return jsonify(results)
+
+@accidents_blueprint.route('/injury_stats/<int:area>', methods=['GET'])
+def injury_stats_by_area(area):
+    results = get_injury_stats_by_area(area=str(area))
+    return jsonify(results[0])

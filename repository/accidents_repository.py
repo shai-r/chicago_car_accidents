@@ -24,15 +24,49 @@ def get_accidents_by_area_and_time(area, time_type, date):
     if time_type == 'm':
         date_split = date.split('-')
         return monthly.find_one({'year': date_split[0],'month': str(int(date_split[1])), 'area': f'{area}'})
-# def find_car_by_id(id: str, collection: Collection = default_car_collection):
-#     return Maybe.from_optional(collection.find_one({'_id': id}))
+
+def get_accidents_by_cause(area):
+    pipeline = [
+        {'$match': {'area': area}},
+        {'$group': {
+            '_id': '$contributing_factors',
+            'count': {'$sum': 1}
+        }}
+    ]
+    return list(default_accident_collection.aggregate(pipeline))
+
+
+def get_injury_stats_by_area(area):
+    pipeline = [
+        {'$match': {'area': area}},
+        {'$group': {
+            '_id': None,
+            'total_injuries': {'$sum': '$injuries.total'},
+            'fatal_injuries': {'$sum': '$injuries.fatal'},
+            'non_fatal_injuries': {'$sum': '$injuries.non_fatal'},
+            'events': {'$push': {
+                'date': '$date',
+                'injuries': '$injuries'
+            }}
+        }}
+    ]
+    return list(default_accident_collection.aggregate(pipeline))
+# def group_by_main_cause(area):
+#     res = default_accident_collection.aggregate([
+#         {'$match': {'area': area}},
+#         {'$group': {'_id': '$main_cause', 'count': {'$sum': 1},'total injury': {'$sum': '$injuries.total' }, 'fatal': {'$sum': '$injuries.fatal' } }},
+#         {'$sort': {'fatal': -1}}
+#     ])
+#     return list(res)
 #
-# def update_car_by_id(id: str, new_car: dict, collection: Collection = default_car_collection):
-#     return collection.update_one({'_id': id}, {'$set': {
-#         'license_id': new_car['license_id'],
-#         'brand': new_car['brand'],
-#         'color': new_car['color']
-#         }})
-#
-# def delete_car_by_id(id: str, collection: Collection = default_car_collection):
-#     return collection.delete_one({'_id': id})
+# def statistics_by_region(area):
+#     res = default_accident_collection.aggregate([
+#         {'$match': {'area': area}},
+#         {'$project': {'_id': 0}},
+#         {'$group': {'_id': '$region',
+#                     'total injury': {'$sum': '$injuries.total' },
+#                     'fatal': {'$sum': '$injuries.fatal' },
+#                     'non_fatal': {'$sum': '$injuries.non_fatal' },
+#                     'all accidents': {'$push':'$$ROOT'}}}
+#     ])
+#     return list(res)
