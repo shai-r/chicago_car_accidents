@@ -1,11 +1,10 @@
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
-from controllers.accidents_controller import accidents_blueprint  # כאן תוודא שאתה שם את הנתיב הנכון למודול של הבקר
+from controllers.accidents_controller import accidents_blueprint
 
 @pytest.fixture
 def app() -> Flask:
-    """ הגדרת Flask עבור סביבת בדיקות """
     app = Flask(__name__)
     app.register_blueprint(accidents_blueprint, url_prefix="/api/accidents")
     return app

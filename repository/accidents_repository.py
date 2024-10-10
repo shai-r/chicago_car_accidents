@@ -51,22 +51,70 @@ def get_injury_stats_by_area(area):
         }}
     ]
     return list(default_accident_collection.aggregate(pipeline))
-# def group_by_main_cause(area):
-#     res = default_accident_collection.aggregate([
-#         {'$match': {'area': area}},
-#         {'$group': {'_id': '$main_cause', 'count': {'$sum': 1},'total injury': {'$sum': '$injuries.total' }, 'fatal': {'$sum': '$injuries.fatal' } }},
-#         {'$sort': {'fatal': -1}}
-#     ])
-#     return list(res)
-#
-# def statistics_by_region(area):
-#     res = default_accident_collection.aggregate([
-#         {'$match': {'area': area}},
-#         {'$project': {'_id': 0}},
-#         {'$group': {'_id': '$region',
-#                     'total injury': {'$sum': '$injuries.total' },
-#                     'fatal': {'$sum': '$injuries.fatal' },
-#                     'non_fatal': {'$sum': '$injuries.non_fatal' },
-#                     'all accidents': {'$push':'$$ROOT'}}}
-#     ])
-#     return list(res)
+
+
+def get_injury_stats_by_area2(area):
+    pipeline = [
+        {'$match': {'area': area}},
+        {'$unwind': '$accidents'},
+        {'$group': {
+            '_id': '$area',
+            'totalInjuries': {'$sum': '$accidents.injuries.total'},
+            'totalFatal': {'$sum': '$accidents.injuries.fatal'},
+            'totalNonFatal': {'$sum': '$accidents.injuries.non_fatal'},
+            'fatalAccidents': {
+                '$push': {
+                    '$cond': [
+                        {'$gt': ['$accidents.injuries.fatal', 0]},
+                        {
+                            'date': '$accidents.date',
+                            'cause': '$accidents.PRIM_CONTRIBUTORY_CAUSE',
+                            'fatalCount': '$accidents.injuries.fatal'
+                        },
+                        None
+                    ]
+                }
+            },
+            'nonFatalAccidents': {
+                '$push': {
+                    '$cond': [
+                        {
+                            '$and': [
+                                {'$eq': ['$accidents.injuries.fatal', 0]},
+                                {'$gt': ['$accidents.injuries.non_fatal', 0]}
+                            ]
+                        },
+                        {
+                            'date': '$accidents.date',
+                            'cause': '$accidents.PRIM_CONTRIBUTORY_CAUSE',
+                            'nonFatalCount': '$accidents.injuries.non_fatal'
+                        },
+                        None
+                    ]
+                }
+            }
+        }},
+        {'$project': {
+            '_id': 0,
+            'area': '$_id',
+            'totalInjuries': 1,
+            'totalFatal': 1,
+            'totalNonFatal': 1,
+            'fatalAccidents': {
+                '$filter': {
+                    'input': '$fatalAccidents',
+                    'as': 'accident',
+                    'cond': {'$ne': ['$$accident', None]}
+                }
+            },
+            'nonFatalAccidents': {
+                '$filter': {
+                    'input': '$nonFatalAccidents',
+                    'as': 'accident',
+                    'cond': {'$ne': ['$$accident', None]}
+                }
+            }
+        }}
+    ]
+    return list(default_accident_collection.aggregate(pipeline))
+
